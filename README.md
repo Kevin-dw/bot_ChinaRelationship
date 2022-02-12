@@ -1,0 +1,2 @@
+# bot_ChinaRelationship
+基于botoy和OPQBot的亲戚关系计算器插件
