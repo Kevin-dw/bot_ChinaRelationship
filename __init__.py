@@ -1,39 +1,18 @@
 """亲戚计算器, 发送 我的XXX叫啥 即可"""
 from botoy import GroupMsg, FriendMsg, Picture, Text
-from botoy.collection import MsgTypes
 from botoy.decorators import ignore_botself, startswith
-from botoy.parser import group as gp# 群消息(GroupMsg)相关解析
-from botoy.parser import friend as fp # 好友消息(FriendMsg)相关解析
-from botoy import jconfig, logger
 import os
 import re
 
-import demjson,random
+import demjson
 import ijson as ijson
 
 arr = [
-    	'根据我国法律暂不支持同性婚姻，怎么称呼你自己决定吧',
-    	'是男是女不重要，是你就好'
-      ]
+    '根据我国法律暂不支持同性婚姻，怎么称呼你自己决定吧',
+    '是男是女不重要，是你就好'
+]
 
-@ignore_botself#忽略机器人自身的消息
-@startswith("我的")#Content 以指定前缀开头，适用的消息：GroupMsg, FriendMsg
-def receive_group_msg(ctx: GroupMsg):
-    if(ctx.Content.find("的聊天记录")!=-1):
-        return
-    elif(ctx.Content.find("叫啥")!=-1 or ctx.Content.find("叫什么")!=-1):
-        text = ctx.Content.replace("叫啥", "").replace("叫什么", "")
-        Text(calculate(text))
-        
-@ignore_botself#忽略机器人自身的消息
-@startswith("我的")#Content 以指定前缀开头，适用的消息：GroupMsg, FriendMsg
-def receive_friend_msg(ctx: FriendMsg):
-    if(ctx.Content.find("的聊天记录")!=-1):
-        return
-    elif(ctx.Content.find("叫啥")!=-1 or ctx.Content.find("叫什么")!=-1):
-        text = ctx.Content.replace("叫啥", "").replace("叫什么", "")
-        Text(calculate(text))
-        
+
 # 【关系】f:父,m:母,h:夫,w:妻,s:子,d:女,xb:兄弟,ob:兄,lb:弟,xs:姐妹,os:姐,ls:妹
 # 【修饰符】 &o:年长,&l:年幼,#:隔断,[a|b]:并列
 
@@ -56,6 +35,7 @@ def strInsert(strOrigin, pos, strAdd):
     strOut = ''.join(strList)  # 空字符连接
     return strOut
 
+
 # 检查整个字符串是否包含中文
 def isChinese(string):
     for ch in string:
@@ -68,8 +48,10 @@ def isChinese(string):
 # 将文字转换成关系符号
 def transformTitleToKey(text):
     result = text.replace("的", ",").replace("我", "").replace("爸爸", "f").replace("父亲", "f").replace("妈妈", "m").replace(
-        "母亲", "m").replace("爷爷", "f,f").replace("奶奶", "f,m").replace("外公", "m,f").replace("姥爷", "m,f").replace("外婆", "m,m").replace("姥姥", "m,m").replace("老公", "h").replace("丈夫", "h").replace("老婆",
-                                                                                                           "w").replace(
+        "母亲", "m").replace("爷爷", "f,f").replace("奶奶", "f,m").replace("外公", "m,f").replace("姥爷", "m,f").replace("外婆",
+                                                                                                               "m,m").replace(
+        "姥姥", "m,m").replace("老公", "h").replace("丈夫", "h").replace("老婆",
+                                                                   "w").replace(
         "妻子", "h").replace("儿子", "s").replace("女儿", "d").replace("兄弟", "xd").replace("哥哥", "ob").replace("弟弟",
                                                                                                          "lb").replace(
         "姐妹", "xs").replace("姐姐", "os").replace("妹妹", "ls").strip(",")
@@ -78,7 +60,9 @@ def transformTitleToKey(text):
 
 def errorMessage(key):
     message = key
-    if key.find("ob,h") != -1 or key.find("xb,h") != -1 or key.find("lb,h") != -1 or key.find("os,w") != -1 or key.find("ls,w") != -1 or key.find("xs,w") != -1 or key.find("f,h") != -1 or key.find("m,w") != -1 or key.find("d,w") != -1 or key.find("s,h") != -1:
+    if key.find("ob,h") != -1 or key.find("xb,h") != -1 or key.find("lb,h") != -1 or key.find("os,w") != -1 or key.find(
+            "ls,w") != -1 or key.find("xs,w") != -1 or key.find("f,h") != -1 or key.find("m,w") != -1 or key.find(
+            "d,w") != -1 or key.find("s,h") != -1:
         message = "根据我国法律暂不支持同性婚姻，怎么称呼你自己决定吧"
     elif (key.find("h,h") != -1 or key.find("w,w") != -1):
         message = "根据我国法律暂不支持重婚，怎么称呼你自己决定吧"
@@ -101,7 +85,7 @@ def FilteHelper(text):
             result1 = re.findall(obj[0][i]['exp'], result)  # 返回string中所有与pattern匹配的全部字符串,返回形式为数组
             a = 0
             result2 = ""
-            if len(result1)>1:
+            if len(result1) > 1:
                 try:
                     for i in len(result1):
                         result = result.replace("$" + str(a + 1), result1[a])
@@ -124,7 +108,7 @@ def FilteHelper(text):
             result1 = re.findall(obj[0][i]['exp'], strInsert(result, 0, ','))  # 返回string中所有与pattern匹配的全部字符串,返回形式为数组
             a = 0
             result2 = ""
-            if len(result1)>1:
+            if len(result1) > 1:
                 try:
                     for i in len(result1):
                         result = result.replace("$" + str(a + 1), result1[a])
@@ -145,9 +129,10 @@ def FilteHelper(text):
                 return str(result1).replace("[\'", "").replace("\']", "")
     return text
 
+
 # 从数据源中查找对应 key 的结果
 def dataValueByKeys(data_text):
-    if(isChinese(data_text)):  # 判断是否含有中文，含有的是特殊回复
+    if (isChinese(data_text)):  # 判断是否含有中文，含有的是特殊回复
         return data_text
     dataName = './plugins/bot_ChinaRelationship/data.json'
     if not os.path.isfile(dataName):
@@ -183,3 +168,23 @@ def calculate(text):
         return "我不会"
     else:
         return result.strip("\\")
+    
+
+@ignore_botself  # 忽略机器人自身的消息
+@startswith("我的")  # Content 以指定前缀开头，适用的消息：GroupMsg, FriendMsg
+def receive_group_msg(ctx: GroupMsg):
+    if (ctx.Content.find("的聊天记录") != -1):
+        return
+    elif (ctx.Content.find("叫啥") != -1 or ctx.Content.find("叫什么") != -1):
+        text = ctx.Content.replace("叫啥", "").replace("叫什么", "")
+        Text(calculate(text))
+
+
+@ignore_botself  # 忽略机器人自身的消息
+@startswith("我的")  # Content 以指定前缀开头，适用的消息：GroupMsg, FriendMsg
+def receive_friend_msg(ctx: FriendMsg):
+    if (ctx.Content.find("的聊天记录") != -1):
+        return
+    elif (ctx.Content.find("叫啥") != -1 or ctx.Content.find("叫什么") != -1):
+        text = ctx.Content.replace("叫啥", "").replace("叫什么", "")
+        Text(calculate(text))
